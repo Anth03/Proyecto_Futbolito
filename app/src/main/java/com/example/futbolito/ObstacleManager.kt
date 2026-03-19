@@ -43,10 +43,10 @@ fun checkCollisionWithObstacles(
 
             // Cambiar la dirección de la velocidad según el solapamiento
             if (minOverlap == overlapLeft || minOverlap == overlapRight) {
-                newVelocity = newVelocity.copy(x = -newVelocity.x) // Rebote en los lados
+                newVelocity = newVelocity.copy(x = -newVelocity.x * 0.8f) // Rebote con amortiguación en los lados
             }
             if (minOverlap == overlapTop || minOverlap == overlapBottom) {
-                newVelocity = newVelocity.copy(y = -newVelocity.y) // Rebote en la parte superior o inferior
+                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.8f) // Rebote con amortiguación arriba/abajo
             }
 
             // Evitar que la pelota quede atrapada dentro del obstáculo

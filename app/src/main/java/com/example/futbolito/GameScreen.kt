@@ -5,7 +5,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.Bundle
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -38,7 +37,6 @@ fun GameScreen() {
     val openingSize = 100f  // Abertura en el centro de la portería
 
     val goalLeft = screenSize.x / 2 - goalWidth / 2 // Límite izquierdo de la portería
-    val goalRight = screenSize.x / 2 + goalWidth / 2 // Límite derecho de la portería
     val openingLeft = screenSize.x / 2 - openingSize / 2 // Límite izquierdo de la abertura
     val openingRight = screenSize.x / 2 + openingSize / 2 // Límite derecho de la abertura
 
@@ -48,6 +46,9 @@ fun GameScreen() {
     // Inicializa el gestor de sensores
     val sensorManager = remember { context.getSystemService(SensorManager::class.java) }
     val sensor = remember { sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+
+    // Carga el bitmap del fondo UNA sola vez (no dentro del Canvas)
+    val backgroundBitmap = remember(context) { BitmapFactory.decodeResource(context.resources, R.drawable.cesped) }
 
     // Contenedor principal de la pantalla
     Box(
@@ -61,11 +62,9 @@ fun GameScreen() {
             }
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val backgroundBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.cesped) // Imagen de fondo
-
             val width = screenSize.x
             val height = screenSize.y
-            // Dibuja el fondo en la pantalla
+            // Dibuja el fondo en la pantalla (bitmap cargado fuera del Canvas)
             for (i in 0..(width / backgroundBitmap.width).toInt()) {
                 for (j in 0..(height / backgroundBitmap.height).toInt()) {
                     drawImage(
@@ -83,11 +82,11 @@ fun GameScreen() {
                 drawRect(Color.White, obstacle.position, obstacle.size)
             }
 
-            // Dibuja la portería superior (azul)
-            drawRect(Color.Blue, Offset(goalLeft, 2262 - frameThickness), Size(goalWidth, frameThickness))
+            // Dibuja la portería superior (roja) - el equipo rojo defiende arriba
+            drawRect(Color.Red, Offset(goalLeft, 0f), Size(goalWidth, frameThickness))
 
-            // Dibuja la portería inferior (roja)
-            drawRect(Color.Red, Offset(goalLeft, 50 - goalHeight), Size(goalWidth, frameThickness))
+            // Dibuja la portería inferior (azul) - el equipo azul defiende abajo
+            drawRect(Color.Blue, Offset(goalLeft, screenSize.y - frameThickness), Size(goalWidth, frameThickness))
         }
 
         // Dibuja el marcador de puntos
@@ -97,11 +96,11 @@ fun GameScreen() {
                 .padding(16.dp)
                 .zIndex(1f)
         ) {
-            Text("", color = Color.Red, style = TextStyle(fontSize = 20.sp)) // Título marcador superior
-            Text("$scoreTop", color = Color.Red, style = TextStyle(fontSize = 40.sp)) // Puntuación superior
+            Text("🔴 Rojo", color = Color.Red, style = TextStyle(fontSize = 20.sp))
+            Text("$scoreTop", color = Color.Red, style = TextStyle(fontSize = 40.sp))
             Spacer(modifier = Modifier.height(16.dp))
-            Text("", color = Color.Blue, style = TextStyle(fontSize = 20.sp)) // Título marcador inferior
-            Text("$scoreBottom", color = Color.Blue, style = TextStyle(fontSize = 40.sp)) // Puntuación inferior
+            Text("🔵 Azul", color = Color.Blue, style = TextStyle(fontSize = 20.sp))
+            Text("$scoreBottom", color = Color.Blue, style = TextStyle(fontSize = 40.sp))
         }
 
         // Maneja la interacción del usuario con el acelerómetro
@@ -115,17 +114,27 @@ fun GameScreen() {
                         // Modifica la velocidad de la pelota según los movimientos del acelerómetro
                         velocity = Offset(velocity.x - x * 0.2f, velocity.y + y * 0.2f)
 
-                        var newX = ballPosition.x + velocity.x
-                        var newY = ballPosition.y + velocity.y
+                        // Aplica fricción para un movimiento más natural
+                        velocity = Offset(velocity.x * 0.99f, velocity.y * 0.99f)
 
-                        // Colisiones con los límites de la pantalla
+                        // Limita la velocidad máxima para evitar aceleración descontrolada
+                        val maxSpeed = 25f
+                        velocity = Offset(
+                            velocity.x.coerceIn(-maxSpeed, maxSpeed),
+                            velocity.y.coerceIn(-maxSpeed, maxSpeed)
+                        )
+
+                        var newX = ballPosition.x + velocity.x
+                        val newY = ballPosition.y + velocity.y
+
+                        // Colisiones con los límites laterales de la pantalla
                         newX = when {
                             newX <= ballRadius -> { // Limite izquierdo
-                                velocity = velocity.copy(x = -velocity.x * 0.1f)
+                                velocity = velocity.copy(x = -velocity.x * 0.8f)
                                 ballRadius
                             }
                             newX >= screenSize.x - ballRadius -> { // Limite derecho
-                                velocity = velocity.copy(x = -velocity.x * 0.1f)
+                                velocity = velocity.copy(x = -velocity.x * 0.8f)
                                 screenSize.x - ballRadius
                             }
                             else -> newX
@@ -148,7 +157,7 @@ fun GameScreen() {
                                 newVelocity = Offset(0f, 0f) // Resetea la velocidad
                             } else {
                                 // Rebote en la portería superior
-                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.1f)
+                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.8f)
                                 newPosition = newPosition.copy(y = goalHeight)
                             }
                         } else if (newPosition.y >= screenSize.y - goalHeight) { // Verifica portería inferior
@@ -159,18 +168,8 @@ fun GameScreen() {
                                 newVelocity = Offset(0f, 0f)
                             } else {
                                 // Rebote en la portería inferior
-                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.1f)
+                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.8f)
                                 newPosition = newPosition.copy(y = screenSize.y - goalHeight)
-                            }
-                        } else {
-                            // Rebote en los límites superior e inferior
-                            if (newPosition.y <= ballRadius) {
-                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.1f)
-                                newPosition = newPosition.copy(y = ballRadius)
-                            }
-                            if (newPosition.y >= screenSize.y - ballRadius) {
-                                newVelocity = newVelocity.copy(y = -newVelocity.y * 0.1f)
-                                newPosition = newPosition.copy(y = screenSize.y - ballRadius)
                             }
                         }
 
@@ -184,7 +183,7 @@ fun GameScreen() {
             }
 
             // Registra el listener del sensor para detectar el movimiento
-            sensorManager?.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+            sensorManager?.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_GAME)
 
             // Desregistra el listener cuando ya no se necesite
             onDispose {
