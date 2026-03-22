@@ -40,8 +40,8 @@ fun GameScreen() {
     val openingLeft = screenSize.x / 2 - openingSize / 2 // Límite izquierdo de la abertura
     val openingRight = screenSize.x / 2 + openingSize / 2 // Límite derecho de la abertura
 
-    // Obtén los obstáculos desde el archivo de Obstáculo
-    val obstacles = getObstacles() + getLShapedObstacles()
+    // Obtén los obstáculos desde el archivo de Obstáculo (se recalculan si cambia el tamaño de pantalla)
+    val obstacles = remember(screenSize) { getObstacles() + getLShapedObstacles(screenSize.y) }
 
     // Inicializa el gestor de sensores
     val sensorManager = remember { context.getSystemService(SensorManager::class.java) }
@@ -96,10 +96,8 @@ fun GameScreen() {
                 .padding(16.dp)
                 .zIndex(1f)
         ) {
-            Text("🔴 Rojo", color = Color.Red, style = TextStyle(fontSize = 20.sp))
             Text("$scoreTop", color = Color.Red, style = TextStyle(fontSize = 40.sp))
             Spacer(modifier = Modifier.height(16.dp))
-            Text("🔵 Azul", color = Color.Blue, style = TextStyle(fontSize = 20.sp))
             Text("$scoreBottom", color = Color.Blue, style = TextStyle(fontSize = 40.sp))
         }
 

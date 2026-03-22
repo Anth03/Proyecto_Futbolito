@@ -69,16 +69,18 @@ fun checkCollisionWithObstacles(
 fun getObstacles(): List<Obstacle> {
     return listOf(
         //--------------------Obstáculos en la parte superior-----------------------------
-        Obstacle(Offset(150f, 300f), Size(80f, 25f)), // Obstáculo a la izquierda
-        Obstacle(Offset(860f, 300f), Size(80f, 25f)), // Obstáculo a la derecha
-        Obstacle(Offset(300f, 300f), Size(200f, 25f)), // Obstáculo central
-        Obstacle(Offset(600f, 300f), Size(200f, 25f)), // Obstáculo central
+        // Gaps de 80px entre cada segmento (pelota = 60px diámetro, pasa con margen)
+        // Gap izq (85→165)=80 | [165-245] | gap(245→325)=80 | [325-515] | gap(515→595)=80 | [595-785] | gap(785→865)=80 | [865-920] | gap(920→1000)=80
+        Obstacle(Offset(165f, 300f), Size(80f, 25f)),
+        Obstacle(Offset(325f, 300f), Size(190f, 25f)),
+        Obstacle(Offset(595f, 300f), Size(190f, 25f)),
+        Obstacle(Offset(865f, 300f), Size(55f, 25f)),
 
         //--------------------Obstáculos en la parte inferior-----------------------------
-        Obstacle(Offset(150f, 2000f), Size(80f, 25f)), // Obstáculo a la izquierda
-        Obstacle(Offset(860f, 2000f), Size(80f, 25f)), // Obstáculo a la derecha
-        Obstacle(Offset(300f, 2000f), Size(200f, 25f)), // Obstáculo central
-        Obstacle(Offset(600f, 2000f), Size(200f, 25f)), // Obstáculo central
+        Obstacle(Offset(165f, 2000f), Size(80f, 25f)),
+        Obstacle(Offset(325f, 2000f), Size(190f, 25f)),
+        Obstacle(Offset(595f, 2000f), Size(190f, 25f)),
+        Obstacle(Offset(865f, 2000f), Size(55f, 25f)),
 
         //--------------------Obstáculos en el medio-----------------------------
         Obstacle(Offset(700f, 1156f), Size(200f, 25f)), // Obstáculo izquierdo
@@ -104,7 +106,7 @@ fun getObstacles(): List<Obstacle> {
 }
 
 // Función para obtener obstáculos en forma de "L"
-fun getLShapedObstacles(): List<Obstacle> {
+fun getLShapedObstacles(screenHeight: Float = 1920f): List<Obstacle> {
     return listOf(
         //--------------------Obstáculos en forma de L-----------------------------
         // Obstáculo en L en el extremo superior derecho
@@ -134,11 +136,13 @@ fun getLShapedObstacles(): List<Obstacle> {
         Obstacle(Offset(60f, 400f), Size(25f, 200f)),
 
         //--------------------Porterías-----------------------------
-        // Porterías inferiores
-        Obstacle(Offset(350f, 2190f), Size(25f, 200f)),
-        Obstacle(Offset(710f, 2190f), Size(25f, 200f)),
-        Obstacle(Offset(350f, 2170f), Size(140f, 25f)),
-        Obstacle(Offset(595f, 2170f), Size(140f, 25f)),
+        // Porterías inferiores (posición dinámica, espejo de las superiores)
+        // Postes: visibles desde screenHeight-75 hasta el borde inferior
+        Obstacle(Offset(350f, screenHeight - 75f), Size(25f, 200f)),
+        Obstacle(Offset(710f, screenHeight - 75f), Size(25f, 200f)),
+        // Travesaños: a 60px del borde inferior, igual que los superiores están a 60px del borde superior
+        Obstacle(Offset(350f, screenHeight - 85f), Size(140f, 25f)),
+        Obstacle(Offset(595f, screenHeight - 85f), Size(140f, 25f)),
 
         // Porterías superiores
         Obstacle(Offset(350f, -125f), Size(25f, 200f)),
